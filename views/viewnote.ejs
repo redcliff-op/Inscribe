@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div class="min-h-screen bg-black p-5 flex">
+    <div class="w-full max-w-lg">
+      <a class="text-xl text-blue-500" href="/">Go back to home page</a>
+      <form action="/create" method="post" class="mt-5">
+        <input name="title" readonly type="text" value="<%= title %>" class="text-white block bg-zinc-800 rounded-lg px-4 py-2 w-full">
+        <textarea name="content" class=" text-white my-3  block bg-zinc-800 rounded-lg px-4 py-2 w-full"><%= content %></textarea>
+        <input value="Update" type="submit" class="rounded-lg bg-blue-600 px-4 py-2 text-white">
+      </form>
+    </div>
+  </div>
+</body>
+</html>
