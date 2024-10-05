@@ -15,13 +15,9 @@ app.use(express.urlencoded({ extended: true }))
 app.use(express.static(path.join(__dirname, 'public')))
 app.set('view engine', 'ejs')
 
-app.get("/", async (req, res) => {
+app.get("/", isLoggedIn, async (req, res) => {
   try {
-    if (!req.cookies?.token) {
-      return res.render("signin")
-    }
-    const tokenInfo = jwt.verify(req.cookies.token, "secret")
-    const user = await userModel.findOne({ email: tokenInfo.email })
+    const user = await userModel.findOne({ email: req.user.email })
     if (!user) {
       return res.status(401).send("Unauthorized: Invalid user")
     }
@@ -29,9 +25,6 @@ app.get("/", async (req, res) => {
     res.render("home", { notes: notes })
 
   } catch (err) {
-    if (err.name === "JsonWebTokenError") {
-      return res.status(401).render("signin", { message: "Invalid or expired token" })
-    }
     console.error(err)
     res.status(500).send("Internal server error")
   }
@@ -103,7 +96,7 @@ app.post("/signout", (req, res) => {
   }
 })
 
-app.post("/create", async (req, res) => {
+app.post("/create",isLoggedIn, async (req, res) => {
   try {
     if (await noteModel.exists({ title: req.body.title })) {
       await noteModel.updateOne(
@@ -111,8 +104,7 @@ app.post("/create", async (req, res) => {
         { title: req.body.title, content: req.body.content }
       )
     } else {
-      const tokenInfo = jwt.verify(req.cookies.token, "secret")
-      const user = await userModel.findOne({ email: tokenInfo.email })
+      const user = await userModel.findOne({ email: req.user.email })
       if (!user) {
         return res.status(401).send("Unauthorized: User not found")
       }
@@ -126,9 +118,6 @@ app.post("/create", async (req, res) => {
     }
     res.redirect("/")
   } catch (err) {
-    if (err.name === "JsonWebTokenError") {
-      return res.status(401).render("signin", { message: "Invalid token" })
-    }
     console.error(err)
     res.status(500).send("Failed to create or update note")
   }
@@ -156,5 +145,15 @@ app.get("/notes/:_id", async (req, res) => {
     res.status(500).send("Failed to retrieve note")
   }
 })
+
+function isLoggedIn(req, res, next) {
+  if (!req.cookies?.token) {
+    return res.render("signin")
+  } else {
+    const data = jwt.verify(req.cookies.token, "secret");
+    req.user = data;
+  }
+  next();
+}
 
 app.listen(4000)
